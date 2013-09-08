@@ -124,15 +124,16 @@ double FRA_Arrears(double Spot_fr, double Strike, double Vol, double Tau,
 	 * The formula for arrears cap can be done by avaluating in T_2 numerair to ge
 	 * I did this in sympy and used to solve fair rate as well
 	 *
-	 * fair rate  = f_0*(f_0*tau*exp(sig^2*Expiry) +1)/(1+tau*f_0)
+	 * fair rate  = f_0*(f_0*tau*exp(sig^2*(Expiry-Tau) +1)/(1+tau*f_0)
 	 * if you exand first to terms of exp term then you get
-	 * fair rate approx = f_0 + f_0^2*sig^2*tau*Expiry/(1+tau*f_0)
+	 * fair rate approx = f_0 + f_0^2*sig^2*tau*(Expiry-Tau)/(1+tau*f_0)
 	 * = f_0 + usual_convexity_adjustment
 	 */
 
 	double sig2 = Vol*Vol;
 	double Spot2 = Spot_fr*Spot_fr;
+	double Time1 = Expiry-Tau;
 	return Tau*ZCB*((Spot_fr - Strike) +
-					(Spot2*Tau*(std::exp(sig2*Expiry))-Strike*Spot_fr*Tau)
+					(Spot2*Tau*(std::exp(sig2*Time1))-Strike*Spot_fr*Tau)
 					);
 }

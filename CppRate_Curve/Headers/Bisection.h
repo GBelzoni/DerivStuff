@@ -3,7 +3,7 @@
 //              Bisection.h
 //
 //
-#include<math.h>
+
 
 template<class T>
 double Bisection(double Target, 

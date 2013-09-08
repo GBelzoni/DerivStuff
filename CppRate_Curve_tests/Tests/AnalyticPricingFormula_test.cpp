@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 
 	//Check we get rates back
 
-	BOOST_CHECK_CLOSE(res,-0.0023536,0.01);
+	BOOST_CHECK_CLOSE(res,-0.002366971934,0.01);
 
 }
 

@@ -4,7 +4,6 @@
 	<comment></comment>
 	<projects>
 		<project>CppRate_Curve</project>
-		<project>JoshiLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
