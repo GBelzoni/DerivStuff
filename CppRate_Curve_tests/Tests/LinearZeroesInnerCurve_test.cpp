@@ -44,12 +44,13 @@ BOOST_AUTO_TEST_CASE( basic_tests )
 	BOOST_MESSAGE("df3's df = " << df3.getDf());
 
 
+	//Note that a first instrument is added for short rate
 	int len = curve.length();
-	BOOST_CHECK_EQUAL(len, 3);
+	BOOST_CHECK_EQUAL(len, 4);
 
 	vector<vector<double> > list = curve.GetDFList();
-	BOOST_CHECK_CLOSE(list[0][0], 0.994018, 0.01); //Check df
-	BOOST_CHECK_CLOSE(list[0][1], 0.2, 0.01); //Check expiry
+	BOOST_CHECK_CLOSE(list[1][0], 0.994018, 0.01); //Check df
+	BOOST_CHECK_CLOSE(list[1][1], 0.2, 0.01); //Check expiry
 	BOOST_MESSAGE("Added one df instrument: Check df and expiry ok");
 
 	//Fit curve
@@ -96,6 +97,5 @@ BOOST_AUTO_TEST_CASE( basic_tests )
 
 
 }
-
 
 BOOST_AUTO_TEST_SUITE_END()

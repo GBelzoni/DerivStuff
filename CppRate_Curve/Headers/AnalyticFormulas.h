@@ -60,5 +60,23 @@ double BlackScholesPutRho( double Spot,
                              double Vol,
                              double Expiry);
 
+double BlackCaplet( double Spot_fr,
+						double Strike,
+						double Vol,
+						double Tau,
+						double Expiry,
+						double ZCB);
+
+double FRA_Arrears( double Spot_fr,
+						double Strike,
+						double Vol,
+						double Tau,
+						double Expiry,
+						double ZCB);
+
+
+
+
+
 
 #endif /* ANALYTICFORMULAS_H_ */

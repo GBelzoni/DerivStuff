@@ -8,6 +8,8 @@
 #include <cmath>
 #include <Normals.h>
 #include "AnalyticFormulas.h"
+#include <BlackScholesFormulas.h>
+
 
 #if !defined(_MSC_VER)
 using namespace std;
@@ -94,4 +96,43 @@ double BlackScholesPutRho(double Spot, double Strike, double r, double d,
 			+ 0.5 * standardDeviation * standardDeviation) / standardDeviation;
 	double d2 = d1 - standardDeviation;
 	return -Strike*Expiry*exp(-r*Expiry)*CumulativeNormal(-d2);
+}
+
+double BlackCaplet(double Spot_fr, double Strike, double Vol, double Tau,
+		double Expiry, double ZCB) {
+		/**
+		 * Prices Caplet using Black formula.
+		 * Expiry is expiry of caplet, ie start of cap
+		 * ZCB is price for ZCB ending at end of cap period, ie Expiry + tau
+		 */
+
+		///Can price using usual BSF with zero rates
+		double BS_res = BlackScholesCall( Spot_fr,
+									Strike,
+									0.0,
+									0.0,
+									Vol,
+									Expiry);
+
+		return ZCB*Tau*BS_res;
+}
+
+double FRA_Arrears(double Spot_fr, double Strike, double Vol, double Tau,
+		double Expiry, double ZCB) {
+
+	/**
+	 * The formula for arrears cap can be done by avaluating in T_2 numerair to ge
+	 * I did this in sympy and used to solve fair rate as well
+	 *
+	 * fair rate  = f_0*(f_0*tau*exp(sig^2*Expiry) +1)/(1+tau*f_0)
+	 * if you exand first to terms of exp term then you get
+	 * fair rate approx = f_0 + f_0^2*sig^2*tau*Expiry/(1+tau*f_0)
+	 * = f_0 + usual_convexity_adjustment
+	 */
+
+	double sig2 = Vol*Vol;
+	double Spot2 = Spot_fr*Spot_fr;
+	return Tau*ZCB*((Spot_fr - Strike) +
+					(Spot2*Tau*(std::exp(sig2*Expiry))-Strike*Spot_fr*Tau)
+					);
 }
