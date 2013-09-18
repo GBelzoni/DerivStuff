@@ -40,14 +40,11 @@ endif
 # All Target
 all: CppRate_Curve_tests
 
-dependents:
-	-cd /home/phcostello/git/DerivStuff/CppRate_Curve/Debug && $(MAKE) all
-
 # Tool invocations
-CppRate_Curve_tests: $(OBJS) $(USER_OBJS) /home/phcostello/git/DerivStuff/CppRate_Curve/Debug/libCppRate_Curve.so
+CppRate_Curve_tests: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L"/home/phcostello/git/DerivStuff/CppRate_Curve/Debug" -L/usr/lib -o "CppRate_Curve_tests" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/usr/local/lib -o "CppRate_Curve_tests" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -58,6 +55,5 @@ clean:
 
 .PHONY: all clean dependents
 .SECONDARY:
-/home/phcostello/git/DerivStuff/CppRate_Curve/Debug/libCppRate_Curve.so:
 
 -include ../makefile.targets
