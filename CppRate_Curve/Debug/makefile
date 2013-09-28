@@ -45,7 +45,7 @@ all: libCppRate_Curve.so
 libCppRate_Curve.so: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -shared -o "libCppRate_Curve.so" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/usr/lib -shared -o "libCppRate_Curve.so" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

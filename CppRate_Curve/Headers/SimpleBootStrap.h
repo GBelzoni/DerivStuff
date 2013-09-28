@@ -10,7 +10,7 @@
 
 #include "BaseSimpleCurve.h"
 #include "BaseInnerCurve.h"
-#include "CurveExceptions.hpp"
+#include "CurveExceptions.h"
 #include <wrapper.h>
 #include <boost/shared_ptr.hpp>
 
