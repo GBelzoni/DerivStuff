@@ -11,6 +11,8 @@
 #include <vector>
 #include <AnalyticFormulas.h>
 #include <VanillaIntPricer.h>
+#include <ParkMiller.h>
+#include <AntiThetic.h>
 
 
 using namespace std;
@@ -48,16 +50,24 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 						ZCB,
 						num_intervals);
 
-	BOOST_MESSAGE( "NumInt Arrears =anal " << res_int);
-
-//	res_int = FRA_Arrears_mc(Spot_fr,
-//							Strike,
-//							Vol,
-//							tau,
-//							Expiry,
-//							ZCB);
 
 
+	BOOST_MESSAGE( "NumInt Arrears = " << res_int);
+
+	int num_paths =100000;
+	RandomParkMiller generator(1);
+	AntiThetic genTwo(generator);
+
+	res_mc = vp1.MCprice(Spot_fr,
+							Strike,
+							Vol,
+							tau,
+							Expiry,
+							ZCB,
+							num_paths,
+							generator);
+
+	BOOST_MESSAGE( "MC Arrears = " << res_mc);
 
 }
 
