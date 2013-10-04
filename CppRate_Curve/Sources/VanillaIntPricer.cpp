@@ -45,7 +45,7 @@ double VanillaIntPricer::price(double Spot,
 	for( double x_n : range){
 
 		//CalcSpot
-		thisSpot = Spot*exp( -0.5*Vol*Vol*(Expiry-tau) + Vol*sqrt(Expiry-tau)*x_n);
+		thisSpot = Spot*exp( -0.5*Vol*Vol*(Expiry) + Vol*sqrt(Expiry)*x_n);
 		//CalcPayOff
 		thisPayOff = tau*(thisSpot-Strike)*(1.0 + tau*thisSpot);
 		thisScaledPayOff = thisPayOff*(1.0/sqrt(2 * M_PI))*exp(-0.5*x_n*x_n);
@@ -72,8 +72,6 @@ double VanillaIntPricer::MCprice(double Spot,
 {
 
 
-	//SetupGenerator
-	theGenerator.ResetDimensionality(1);
 	//Do loop
 	double total = 0;
 
@@ -89,7 +87,7 @@ double VanillaIntPricer::MCprice(double Spot,
 		theGenerator.GetGaussians(VariateArray);
 		x_n = VariateArray[0];
 		//CalcSpot
-		thisSpot = Spot*exp( -0.5*Vol*Vol*(Expiry-tau) + Vol*sqrt(Expiry-tau)*x_n);
+		thisSpot = Spot*exp( -0.5*Vol*Vol*(Expiry) + Vol*sqrt(Expiry)*x_n);
 		//CalcPayOff
 		thisPayOff = tau*(thisSpot-Strike)*(1.0 + tau*thisSpot);
 		total += thisPayOff;
@@ -116,20 +114,18 @@ void VanillaIntPricer::MCprice_stepper(double Spot,
 		StatisticsMC& theGatherer)
 {
 
-
-	//SetupGenerator
-	theGenerator.ResetDimensionality(1);
 	//Do loop
-	double total = 0;
 	double thisSpot;
 	double thisPayOff;
 	double thisResult;
-	double x_n;
 
 	//For stepping
-	double dt = (Expiry - tau)/discretization;
+	double dt = Expiry/discretization;
+
 	MJArray VariateArray(discretization);
 	theGenerator.ResetDimensionality(discretization);
+
+	double discVol = Vol*sqrt(dt); //make sure to get vol over step
 
 	for( int i=0; i<num_paths; i++){
 
@@ -139,18 +135,79 @@ void VanillaIntPricer::MCprice_stepper(double Spot,
 		//CalcSpot
 		thisSpot = Spot;
 		//Stepping loop - use f(t,T0,T1) path in P(t,T0) numeraire as in Joshi (14.14) p331
-		for( int j ; j<discretization; j++)
+		for( int j=0 ; j<discretization; j++)
 		{
-			thisSpot += (tau*thisSpot*thisSpot)/(1.0+tau*thisSpot)*Vol*Vol*dt; //Drift evolution
-			thisSpot += Vol*thisSpot*VariateArray[j];
+			thisSpot += ((tau*thisSpot*thisSpot)/(1.0+tau*thisSpot))*Vol*Vol*dt*dt + discVol*thisSpot*VariateArray[j]; //Drift evolution
+
 		}
 
 		//Do one path
 		thisPayOff = tau*(thisSpot-Strike); //CalcPayOff
 		thisResult = thisPayOff*ZCB; //Mult by numeraire
-		theGatherer.DumpOneResult(thisPayOff);
+		theGatherer.DumpOneResult(thisResult);
 
 	}
 
 }
+
+
+
+//This function is for testing MC arrears pricing with P0 numeraire
+void VanillaIntPricer::MCprice_predCor(double Spot,
+		double Strike,
+		double Vol,
+		double tau,
+		double Expiry,
+		double ZCB,
+		int num_paths,
+		RandomBase& theGenerator,
+		StatisticsMC& theGatherer)
+{
+
+	//Do loop
+	double initDrift;
+	double predSpot;
+	double predDrift;
+	double averageDrift;
+	double correctedSpot;
+	double thisPayOff;
+	double thisResult;
+
+	//For stepping
+
+
+	MJArray VariateArray(1);
+	theGenerator.ResetDimensionality(1);
+
+	for( int i=0; i<num_paths; i++){
+
+
+		//Prediction Correction
+		//Generate one path
+		//Draw a random gaussians
+		theGenerator.GetGaussians(VariateArray);
+		//CalcSpot
+
+		initDrift = (tau*Spot*Spot)/(1.0+tau*Spot)*Vol*Vol*Expiry*Expiry;
+
+		predSpot = Spot + initDrift + Vol*sqrt(Expiry)*Spot*VariateArray[0];
+
+		predDrift = (tau*predSpot*predSpot)/(1.0+tau*predSpot)*Vol*Vol*Expiry*Expiry;
+
+		averageDrift = (initDrift + predDrift)/2.0;
+
+		correctedSpot = Spot + averageDrift + Vol*sqrt(Expiry)*Spot*VariateArray[0];
+
+
+
+		//Do one path
+		thisPayOff = tau*(correctedSpot-Strike); //CalcPayOff
+		thisResult = thisPayOff*ZCB; //Mult by numeraire
+		theGatherer.DumpOneResult(thisResult);
+
+	}
+
+}
+
+
 

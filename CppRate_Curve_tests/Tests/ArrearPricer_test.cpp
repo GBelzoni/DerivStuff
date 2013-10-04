@@ -13,6 +13,8 @@
 #include <VanillaIntPricer.h>
 #include <ParkMiller.h>
 #include <AntiThetic.h>
+#include <ConvergenceTable.h>
+//#include <armadillo>
 
 
 using namespace std;
@@ -23,12 +25,16 @@ BOOST_AUTO_TEST_SUITE( ArrearsPricer)
 BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 {
 	//Check that FRA_Arrears_Working
-	double Spot_fr = 0.06;
-	double Strike = 0.07;
+	double Spot_fr = 0.07;
+	double Strike = 0.06;
 	double tau = 0.5;
 	double Vol = 0.2;
 	double Expiry = 10.0;
 	double ZCB = 0.5;
+
+	//I think ZCBT2 should be in formulas with T2 numeraire and ZCB when using T1
+
+	double ZCBT2 = ZCB/(1+Spot_fr*tau);
 
 	double res_anal, res_int, res_mc;
 	res_anal = FRA_Arrears( Spot_fr,
@@ -36,7 +42,7 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 						Vol,
 						tau,
 						Expiry,
-						ZCB);
+						ZCBT2);
 
 	BOOST_MESSAGE( "Analytic Arrears = " << res_anal);
 	//Check we get rates back
@@ -47,7 +53,7 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 						Vol,
 						tau,
 						Expiry,
-						ZCB,
+						ZCBT2,
 						num_intervals);
 
 
@@ -63,11 +69,54 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 							Vol,
 							tau,
 							Expiry,
-							ZCB,
+							ZCBT2,
 							num_paths,
-							generator);
+							genTwo);
 
 	BOOST_MESSAGE( "MC Arrears = " << res_mc);
+
+	StatisticsMean theGatherer;
+	ConvergenceTable CT(theGatherer);
+
+	RandomParkMiller generator3(1);
+	AntiThetic gen4(generator3);
+
+	int discretization = 40;
+
+	vp1.MCprice_stepper(Spot_fr,
+			Strike,
+			Vol,
+			tau,
+			Expiry,
+			ZCB,
+			num_paths,
+			discretization,
+			gen4,
+			CT);
+
+	vector<vector<double > > res_mc_stepper = CT.GetResultsSoFar();
+	BOOST_MESSAGE( "MC Arrears stepper = " << res_mc_stepper[res_mc_stepper.size()-1][0]<< " " <<
+			res_mc_stepper[res_mc_stepper.size()-1][1]);
+
+
+	StatisticsMean theGatherer2;
+	ConvergenceTable CT2(theGatherer2);
+	RandomParkMiller generator5(1);
+	AntiThetic gen6(generator5);
+
+	vp1.MCprice_predCor(Spot_fr,
+				Strike,
+				Vol,
+				tau,
+				Expiry,
+				ZCB,
+				num_paths,
+				gen6,
+				CT2);
+
+		vector<vector<double > > res_mc_predCor = CT2.GetResultsSoFar();
+		BOOST_MESSAGE( "MC Arrears predCor = " << res_mc_predCor[res_mc_predCor.size()-1][0]<< " " <<
+				res_mc_predCor[res_mc_predCor.size()-1][1]);
 
 }
 

@@ -47,6 +47,16 @@ public:
 						int discretization,
 						RandomBase& theGenerator,
 						StatisticsMC& theGatherer);
+
+	void MCprice_predCor(double Spot,
+							double Strike,
+							double Vol,
+							double tau,
+							double Expiry,
+							double ZCB,
+							int num_paths,
+							RandomBase& theGenerator,
+							StatisticsMC& theGatherer);
 };
 
 #endif /* VANILLAINTPRICER_H_ */

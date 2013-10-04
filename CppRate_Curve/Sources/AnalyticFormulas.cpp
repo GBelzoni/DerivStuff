@@ -132,7 +132,7 @@ double FRA_Arrears(double Spot_fr, double Strike, double Vol, double Tau,
 
 	double sig2 = Vol*Vol;
 	double Spot2 = Spot_fr*Spot_fr;
-	double Time1 = Expiry-Tau;
+	double Time1 = Expiry;
 	return Tau*ZCB*((Spot_fr - Strike) +
 					(Spot2*Tau*(std::exp(sig2*Time1))-Strike*Spot_fr*Tau)
 					);
