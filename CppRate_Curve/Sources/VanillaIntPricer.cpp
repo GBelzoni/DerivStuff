@@ -47,7 +47,7 @@ double VanillaIntPricer::price(double Spot,
 		//CalcSpot
 		thisSpot = Spot*exp( -0.5*Vol*Vol*(Expiry) + Vol*sqrt(Expiry)*x_n);
 		//CalcPayOff
-		thisPayOff = tau*(thisSpot-Strike)*(1.0 + tau*thisSpot);
+		thisPayOff = tau*max(thisSpot-Strike,0.0)*(1.0 + tau*thisSpot);
 		thisScaledPayOff = thisPayOff*(1.0/sqrt(2 * M_PI))*exp(-0.5*x_n*x_n);
 		total += thisScaledPayOff*interval_size;
 
@@ -89,7 +89,7 @@ double VanillaIntPricer::MCprice(double Spot,
 		//CalcSpot
 		thisSpot = Spot*exp( -0.5*Vol*Vol*(Expiry) + Vol*sqrt(Expiry)*x_n);
 		//CalcPayOff
-		thisPayOff = tau*(thisSpot-Strike)*(1.0 + tau*thisSpot);
+		thisPayOff = tau*max(thisSpot-Strike,0.0)*(1.0 + tau*thisSpot);
 		total += thisPayOff;
 
 	}
@@ -142,7 +142,7 @@ void VanillaIntPricer::MCprice_stepper(double Spot,
 		}
 
 		//Do one path
-		thisPayOff = tau*(thisSpot-Strike); //CalcPayOff
+		thisPayOff = tau*max(thisSpot-Strike,0.0); //CalcPayOff
 		thisResult = thisPayOff*ZCB; //Mult by numeraire
 		theGatherer.DumpOneResult(thisResult);
 
@@ -160,24 +160,26 @@ void VanillaIntPricer::MCprice_predCor(double Spot,
 		double Expiry,
 		double ZCB,
 		int num_paths,
+		int discretization,
 		RandomBase& theGenerator,
 		StatisticsMC& theGatherer)
 {
 
 	//Do loop
+	double thisSpot;
 	double initDrift;
 	double predSpot;
 	double predDrift;
 	double averageDrift;
-	double correctedSpot;
 	double thisPayOff;
 	double thisResult;
 
 	//For stepping
+	//For stepping
+	double dt = Expiry/discretization;
 
-
-	MJArray VariateArray(1);
-	theGenerator.ResetDimensionality(1);
+	MJArray VariateArray(discretization);
+	theGenerator.ResetDimensionality(discretization);
 
 	for( int i=0; i<num_paths; i++){
 
@@ -188,20 +190,25 @@ void VanillaIntPricer::MCprice_predCor(double Spot,
 		theGenerator.GetGaussians(VariateArray);
 		//CalcSpot
 
-		initDrift = (tau*Spot*Spot)/(1.0+tau*Spot)*Vol*Vol*Expiry*Expiry;
+		double discVol = Vol*sqrt(dt); //make sure to get vol over step
 
-		predSpot = Spot + initDrift + Vol*sqrt(Expiry)*Spot*VariateArray[0];
+		thisSpot = Spot;
 
-		predDrift = (tau*predSpot*predSpot)/(1.0+tau*predSpot)*Vol*Vol*Expiry*Expiry;
+		for( int j=0 ; j<discretization; j++)
+		{
+			initDrift = (tau*thisSpot*thisSpot)/(1.0+tau*thisSpot)*Vol*Vol*dt*dt;
+			predSpot = thisSpot + initDrift + Vol*sqrt(dt)*thisSpot*VariateArray[j];
+			predDrift = (tau*predSpot*predSpot)/(1.0+tau*predSpot)*Vol*Vol*dt*dt;
+			averageDrift = (initDrift + predDrift)/2.0;
+			thisSpot = thisSpot + averageDrift + Vol*sqrt(dt)*thisSpot*VariateArray[j];
 
-		averageDrift = (initDrift + predDrift)/2.0;
+		}
 
-		correctedSpot = Spot + averageDrift + Vol*sqrt(Expiry)*Spot*VariateArray[0];
 
 
 
 		//Do one path
-		thisPayOff = tau*(correctedSpot-Strike); //CalcPayOff
+		thisPayOff = tau*(thisSpot-Strike); //CalcPayOff
 		thisResult = thisPayOff*ZCB; //Mult by numeraire
 		theGatherer.DumpOneResult(thisResult);
 

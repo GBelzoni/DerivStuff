@@ -12,7 +12,7 @@
 #include <ql/math/interpolations/linearinterpolation.hpp>
 #include <boost/shared_ptr.hpp>
 #include <vector>
-#include <CurveExceptions.h>
+#include "CurveExceptions.h"
 
 
 class LinearZeroesInnerCurve: public BaseInnerCurve {

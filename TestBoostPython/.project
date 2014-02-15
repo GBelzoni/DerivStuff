@@ -3,7 +3,6 @@
 	<name>TestBoostPython</name>
 	<comment></comment>
 	<projects>
-		<project>JoshiLibrary</project>
 		<project>CppRate_Curve</project>
 	</projects>
 	<buildSpec>

@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 {
 	//Check that FRA_Arrears_Working
 	double Spot_fr = 0.07;
-	double Strike = 0.06;
+	double Strike = 0.05;
 	double tau = 0.5;
 	double Vol = 0.2;
 	double Expiry = 10.0;
@@ -103,6 +103,7 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 	ConvergenceTable CT2(theGatherer2);
 	RandomParkMiller generator5(1);
 	AntiThetic gen6(generator5);
+	int disc = 50;
 
 	vp1.MCprice_predCor(Spot_fr,
 				Strike,
@@ -111,6 +112,7 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 				Expiry,
 				ZCB,
 				num_paths,
+				disc,
 				gen6,
 				CT2);
 

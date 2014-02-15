@@ -55,6 +55,7 @@ public:
 							double Expiry,
 							double ZCB,
 							int num_paths,
+							int discretization,
 							RandomBase& theGenerator,
 							StatisticsMC& theGatherer);
 };

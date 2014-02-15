@@ -37,28 +37,26 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: BoostPythonTest.so
+all: CurveRatesPy.so
 
 dependents:
-	-cd /home/phcostello/Documents/workspace/JoshiLibrary/Debug && $(MAKE) all
-	-cd /home/phcostello/Documents/workspace/CppRate_Curve/Debug && $(MAKE) all
+	-cd /home/phcostello/git/DerivStuff/CppRate_Curve/Debug && $(MAKE) clean all
 
 # Tool invocations
-BoostPythonTest.so: $(OBJS) $(USER_OBJS) /home/phcostello/Documents/workspace/JoshiLibrary/Debug/libJoshiLibrary.so /home/phcostello/Documents/workspace/CppRate_Curve/Debug/libCppRate_Curve.so
+CurveRatesPy.so: $(OBJS) $(USER_OBJS) /home/phcostello/git/DerivStuff/CppRate_Curve/Debug/libCppRate_Curve.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L"/home/phcostello/Documents/workspace/CppRate_Curve/Debug" -L"/home/phcostello/Documents/workspace/JoshiLibrary/Debug" -shared -o "BoostPythonTest.so" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L"/home/phcostello/git/DerivStuff/CppRate_Curve/Debug" -shared -o "CurveRatesPy.so" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(LIBRARIES)$(CPP_DEPS)$(CXX_DEPS)$(C_UPPER_DEPS) BoostPythonTest.so
+	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(LIBRARIES)$(CPP_DEPS)$(CXX_DEPS)$(C_UPPER_DEPS) CurveRatesPy.so
 	-@echo ' '
 
 .PHONY: all clean dependents
 .SECONDARY:
-/home/phcostello/Documents/workspace/JoshiLibrary/Debug/libJoshiLibrary.so:
-/home/phcostello/Documents/workspace/CppRate_Curve/Debug/libCppRate_Curve.so:
+/home/phcostello/git/DerivStuff/CppRate_Curve/Debug/libCppRate_Curve.so:
 
 -include ../makefile.targets
