@@ -48,6 +48,7 @@ double VanillaIntPricer::price(double Spot,
 		thisSpot = Spot*exp( -0.5*Vol*Vol*(Expiry) + Vol*sqrt(Expiry)*x_n);
 		//CalcPayOff
 		thisPayOff = tau*max(thisSpot-Strike,0.0)*(1.0 + tau*thisSpot);
+//		thisPayOff = tau*(thisSpot-Strike)*(1.0 + tau*thisSpot);
 		thisScaledPayOff = thisPayOff*(1.0/sqrt(2 * M_PI))*exp(-0.5*x_n*x_n);
 		total += thisScaledPayOff*interval_size;
 
@@ -137,12 +138,13 @@ void VanillaIntPricer::MCprice_stepper(double Spot,
 		//Stepping loop - use f(t,T0,T1) path in P(t,T0) numeraire as in Joshi (14.14) p331
 		for( int j=0 ; j<discretization; j++)
 		{
-			thisSpot += ((tau*thisSpot*thisSpot)/(1.0+tau*thisSpot))*Vol*Vol*dt*dt + discVol*thisSpot*VariateArray[j]; //Drift evolution
+			thisSpot += ((tau*thisSpot*thisSpot)/(1.0+tau*thisSpot))*Vol*Vol*dt + discVol*thisSpot*VariateArray[j]; //Drift evolution
 
 		}
 
 		//Do one path
 		thisPayOff = tau*max(thisSpot-Strike,0.0); //CalcPayOff
+//		thisPayOff = tau*(thisSpot-Strike); //CalcPayOff
 		thisResult = thisPayOff*ZCB; //Mult by numeraire
 		theGatherer.DumpOneResult(thisResult);
 
@@ -196,9 +198,9 @@ void VanillaIntPricer::MCprice_predCor(double Spot,
 
 		for( int j=0 ; j<discretization; j++)
 		{
-			initDrift = (tau*thisSpot*thisSpot)/(1.0+tau*thisSpot)*Vol*Vol*dt*dt;
+			initDrift = (tau*thisSpot*thisSpot)/(1.0+tau*thisSpot)*Vol*Vol*dt;
 			predSpot = thisSpot + initDrift + Vol*sqrt(dt)*thisSpot*VariateArray[j];
-			predDrift = (tau*predSpot*predSpot)/(1.0+tau*predSpot)*Vol*Vol*dt*dt;
+			predDrift = (tau*predSpot*predSpot)/(1.0+tau*predSpot)*Vol*Vol*dt;
 			averageDrift = (initDrift + predDrift)/2.0;
 			thisSpot = thisSpot + averageDrift + Vol*sqrt(dt)*thisSpot*VariateArray[j];
 
@@ -208,7 +210,7 @@ void VanillaIntPricer::MCprice_predCor(double Spot,
 
 
 		//Do one path
-		thisPayOff = tau*(thisSpot-Strike); //CalcPayOff
+		thisPayOff = tau*max(thisSpot-Strike,0.0); //CalcPayOff
 		thisResult = thisPayOff*ZCB; //Mult by numeraire
 		theGatherer.DumpOneResult(thisResult);
 

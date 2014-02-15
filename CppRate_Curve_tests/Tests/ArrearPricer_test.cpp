@@ -21,16 +21,15 @@ using namespace std;
 
 BOOST_AUTO_TEST_SUITE( ArrearsPricer)
 
-
 BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 {
 	//Check that FRA_Arrears_Working
 	double Spot_fr = 0.07;
 	double Strike = 0.05;
 	double tau = 0.5;
-	double Vol = 0.2;
-	double Expiry = 10.0;
-	double ZCB = 0.5;
+	double Vol = 0.20;
+	double Expiry = 5.0;
+	double ZCB = 0.65;
 
 	//I think ZCBT2 should be in formulas with T2 numeraire and ZCB when using T1
 
@@ -60,7 +59,7 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 
 	BOOST_MESSAGE( "NumInt Arrears = " << res_int);
 
-	int num_paths =100000;
+	int num_paths =10000;
 	RandomParkMiller generator(1);
 	AntiThetic genTwo(generator);
 
@@ -81,7 +80,7 @@ BOOST_AUTO_TEST_CASE( Check_FRA_Arrears_Formula )
 	RandomParkMiller generator3(1);
 	AntiThetic gen4(generator3);
 
-	int discretization = 40;
+	int discretization = 50;
 
 	vp1.MCprice_stepper(Spot_fr,
 			Strike,

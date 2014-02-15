@@ -49,6 +49,7 @@
 // 4) Change Name of object built to the name you use in BOOST_PYTHON_MODULE(Macro): GOTO project >> properties >> C++ Build >> Settings >> Build Artefact
 // 5) include /boost and /python2.7 directories
 // 6) include boost_python in libraries to include project >> properties >> symbols etc >> libraries
+// 7) make sure to add the location of the so to the PYTHON_PATH and have libs in a default LD_LIBRARY_PATH location, e.g. /usr/local/lib
 
 using namespace boost::python;
 
