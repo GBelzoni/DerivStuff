@@ -17,10 +17,6 @@ Created on Feb 15, 2014
 
 import AnalyticFunctions as af
 
-reload(af)
-
-#Zero Coupon Bond
-af.ZCB(rate=0.05, Expiry=1) 
 
 #BS analytics
 Spot = 110.
