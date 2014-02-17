@@ -48,7 +48,7 @@ if __name__ == '__main__':
     from PayOffs import VanillaCall, VanillaPut
     from VanillaOptions import VanillaOption
     from Gatherer import MeanGatherer
-    from PathGenerators import BGMGenerator
+    from PathGenerators import BGMGenerator, Antithetic, NormalGenerator
     
     from AnalyticFunctions import BSAnalyticFormulas
     
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     
     #Model parameters
     times = [1.]
-    num_paths = 500000
+    num_paths = 100000
     generator = BGMGenerator(Spot,rate,Vol,times)
     gatherer = MeanGatherer()
     
@@ -88,6 +88,16 @@ if __name__ == '__main__':
     print "Analytic Put price: ", bsan.PutPrice()
     print "MC price Call: ", price_call
     print "Analytic Call price: ", bsan.CallPrice()
+    
+    
+    generator_n = NormalGenerator() #Make generator out of np normal generator
+    athetic = Antithetic(generator_n)
+    
+    #Do antithetic
+    generator.generator=athetic
+    mc_pricer.do_trade(vo_call)
+    price_call = mc_pricer.price
+    print "MC price call with Antithetic: ", price_call
     
     
     

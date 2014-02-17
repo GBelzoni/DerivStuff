@@ -14,7 +14,7 @@ class NormalGenerator(object):
     Just a wrapper for generator of normals
     """
     
-    def __init__(self, generator):
+    def __init__(self, generator=normal):
         
         self.generator = generator
     
@@ -103,8 +103,8 @@ if __name__ == '__main__':
     athetic = Antithetic(generator)
     
     bgmgen.generator = athetic 
-    print athetic.get_variates(0, 1, 1)
-    print athetic.get_variates(0, 1, 1)
+    print athetic.get_variates(0, 1, 3)
+    print athetic.get_variates(0, 1, 3)
     
     path = bgmgen.do_one_path()
     print path
