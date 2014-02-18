@@ -29,14 +29,14 @@ class VanillaMCPricer(object):
         
         #Setup sim wide pars
         df = math.exp(-rate*trade.Expiry) 
-        gatherer.reset()
+        self.gatherer.reset()
         generator.times = [Expiry]
         
         for i in range(0,self.num_paths):
             #Generate S_t
             thisSpot = generator.do_one_path()[0]
             thisPayOff = trade.pay_off(thisSpot)
-            gatherer.dump_one_result(thisPayOff)
+            self.gatherer.dump_one_result(thisPayOff)
         
         
         self.price = df*gatherer.mean()
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     
     from PayOffs import VanillaCall, VanillaPut
     from VanillaOptions import VanillaOption
-    from Gatherer import MeanGatherer
+    from Gatherer import MeanGatherer, ConvergenceTable
     from PathGenerators import BGMGenerator, Antithetic, NormalGenerator
     
     from AnalyticFunctions import BSAnalyticFormulas
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     
     #Model parameters
     times = [1.]
-    num_paths = 100000
+    num_paths = 500000
     generator = BGMGenerator(Spot,rate,Vol,times)
     gatherer = MeanGatherer()
     
@@ -90,14 +90,29 @@ if __name__ == '__main__':
     print "Analytic Call price: ", bsan.CallPrice()
     
     
-    generator_n = NormalGenerator() #Make generator out of np normal generator
-    athetic = Antithetic(generator_n)
+    #Use convergence table
+    gatherer_table = ConvergenceTable(stopping_point=num_paths)
+    mc_pricer.gatherer=gatherer_table
+    mc_pricer.do_trade(vo_call)
+    print mc_pricer.price
+    cnv_table = mc_pricer.gatherer.table
+    
+    
+    
+    import pandas as pd
+    cnv_table = pd.DataFrame(cnv_table)
+    cnv_table['ave'] = cnv_table['sum']/cnv_table['paths_done']
+    print cnv_table
+
     
     #Do antithetic
-    generator.generator=athetic
+    generator_n = NormalGenerator() #Make generator out of np normal generator
+    athetic = Antithetic(generator_n)
+    mc_pricer.generator.generator = athetic
     mc_pricer.do_trade(vo_call)
     price_call = mc_pricer.price
     print "MC price call with Antithetic: ", price_call
+    
     
     
     

@@ -8,6 +8,7 @@ from numpy.random import normal
 from math import exp, sqrt
 
 
+
 class NormalGenerator(object):
     
     """
