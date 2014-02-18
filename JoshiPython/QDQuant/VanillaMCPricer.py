@@ -28,18 +28,18 @@ class VanillaMCPricer(object):
     def do_trade(self,trade):
         
         #Setup sim wide pars
-        df = math.exp(-rate*trade.Expiry) 
+        df = math.exp(-self.rate*trade.Expiry) 
         self.gatherer.reset()
-        generator.times = [Expiry]
+        self.generator.times = [trade.Expiry]
         
         for i in range(0,self.num_paths):
             #Generate S_t
-            thisSpot = generator.do_one_path()[0]
+            thisSpot = self.generator.do_one_path()[0]
             thisPayOff = trade.pay_off(thisSpot)
             self.gatherer.dump_one_result(thisPayOff)
         
         
-        self.price = df*gatherer.mean()
+        self.price = df*self.gatherer.mean()
             
     
     
