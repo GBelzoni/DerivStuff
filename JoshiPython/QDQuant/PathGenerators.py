@@ -71,19 +71,18 @@ class GBMGenerator(object):
     '''
 
 
-    def __init__(self, spot, rate, vol, times):
+    def __init__(self, market_params):
         '''
-        This isn't quite right maybe
-        You need to generate each interval step
-        does generating a draw form intervals from lognormals give a lognormal path??
-        Not sure you might have step it out.
-        Will work for one step though
+        
         '''
-        self.spot = spot
-        self.rate = rate
+    
+ 
+        self.spot = market_params['spot']
+        self.rate = market_params['rate']
         self.vol = vol
         self.times = times
         self.generator = NormalGenerator(normal)
+        
         
         aug_times = [0.0]+times
         self.time_diffs = [ aug_times[i] - aug_times[i-1] for i in range(1,len(aug_times))]
