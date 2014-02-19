@@ -9,7 +9,7 @@ import AnalyticFunctions as af
 from PayOffs import *
 from VanillaOptions import VanillaOption
 from VanillaMCPricer import VanillaMCPricer
-from PathGenerators import BGMGenerator
+from PathGenerators import GBMGenerator
 from Gatherer import MeanGatherer
 
 class VanillaCallTest(unittest.TestCase):
@@ -35,7 +35,7 @@ class VanillaCallTest(unittest.TestCase):
         #Setup MC pricer
         num_paths = 100000
         times = [self.Expiry]
-        generator = BGMGenerator(self.Spot,
+        generator = GBMGenerator(self.Spot,
                                  self.rate,
                                  self.Vol,
                                  times)

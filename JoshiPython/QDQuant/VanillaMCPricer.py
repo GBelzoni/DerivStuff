@@ -48,7 +48,7 @@ if __name__ == '__main__':
     from PayOffs import VanillaCall, VanillaPut
     from VanillaOptions import VanillaOption
     from Gatherer import MeanGatherer, ConvergenceTable
-    from PathGenerators import BGMGenerator, Antithetic, NormalGenerator
+    from PathGenerators import GBMGenerator, Antithetic, NormalGenerator
     
     from AnalyticFunctions import BSAnalyticFormulas
     
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     #Model parameters
     times = [1.]
     num_paths = 500000
-    generator = BGMGenerator(Spot,rate,Vol,times)
+    generator = GBMGenerator(Spot,rate,Vol,times)
     gatherer = MeanGatherer()
     
     #Do sim
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     
     
     #Use convergence table
-    gatherer_table = ConvergenceTable(stopping_point=num_paths)
+    gatherer_table = ConvergenceTable(gatherer,stopping_point=num_paths)
     mc_pricer.gatherer=gatherer_table
     mc_pricer.do_trade(vo_call)
     print mc_pricer.price
