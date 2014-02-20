@@ -62,9 +62,6 @@ class Antithetic(NormalGenerator):
             self.even = True
             return -self.lastsample       
 
-        
-
-
 class GBMGenerator(object):
     '''
     classdocs
@@ -76,17 +73,18 @@ class GBMGenerator(object):
         
         '''
     
- 
+        self.market_params = market_params
         self.spot = market_params['spot']
         self.rate = market_params['rate']
-        self.vol = vol
-        self.times = times
+        self.vol = market_params['vol']
+        
         self.generator = NormalGenerator(normal)
         
+    
+    def sim_setup(self,times):
         
         aug_times = [0.0]+times
         self.time_diffs = [ aug_times[i] - aug_times[i-1] for i in range(1,len(aug_times))]
-        
         #Contruct times up to random draw
         self.drifts = [ exp(self.rate*td - 0.5 * self.vol*self.vol*td) for td in self.time_diffs]
         
@@ -94,7 +92,7 @@ class GBMGenerator(object):
     def do_one_path(self):
         
         """
-        Currently set to use analytice solution to GBM
+        Currently set to use analytic solution to GBM
         Change to be a dispatcher
         """
         
@@ -122,8 +120,10 @@ if __name__ == '__main__':
     times = list(np.linspace(0.01, stop=1.0, num=200))
 #     times = [1.]
     
-    bgmgen = GBMGenerator(spot, rate, vol, times)
+    market_params = {'spot':spot, 'rate':rate, 'vol':vol}
     
+    bgmgen = GBMGenerator(market_params)
+    bgmgen.sim_setup(times)
     #Change random generator
     generator = NormalGenerator(normal) #Make generator out of np normal generator
     athetic = Antithetic(generator)

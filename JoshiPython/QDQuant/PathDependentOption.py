@@ -4,6 +4,9 @@ Created on Feb 20, 2014
 @author: phcostello
 '''
 
+import numpy as np
+
+
 class PathDependentOption(object):
     '''
     Path dependent options will start modelling Asian and discrete barrier
@@ -13,7 +16,7 @@ class PathDependentOption(object):
     '''
 
 
-    def __init__(self, parameters):
+    def __init__(self, parameters=None):
         '''
         Constructor
         parameters should have look_at_times
@@ -27,7 +30,7 @@ class PathDependentOption(object):
     def list_parameter_info(self):
         pass
         
-    def calc_cashflows(self, path):
+    def get_cashflows(self, path):
         
         pass
     
@@ -39,51 +42,84 @@ class AsianArithmeticOption(PathDependentOption):
     
     Early exerices not considered yet
     '''
-
-
-    def list_parameter_info(self):
         
-        print "Paramters are:"
-        print "Vanilla payoff"
-        print "look_at_times - list of times that will be avd over"
-        print "Expiry - single time of expiry"
-        print "path_generator - Path generator"
-        print "num_paths - Number of MC paths"
+    def make_parameter_template(self):
+        
+        """
+        Creates a dict of input paramters to fill in"
+        payoff - vanilla payoff against average"
+        look_at_times - list of times that will be avd over"
+        Expiry - single time of expiry"
+        """
+        
+        parameters = {'payoff':None, 'look_at_times':None, 'Expiry':None}
+        
+        return parameters
             
-    def calc_cashflows(self, path):
+    def get_cashflows(self, path):
         
-        num_paths = self.parameters['num_paths']   
-        payoff = self.parameters['payoff']
+        #Evaluate the payoff for path
+        #Average of price - K
+        average_price = np.mean(path)
+        #Calc payoff
+        po = self.parameters['payoff']
+        this_payoff = po.po(average_price)
         
-        #look at times
-        look_at_times = self.parameters['look_at_times']
+        return this_payoff
+
+class UpAndOutCall(PathDependentOption):
+    '''
+    Path dependent options will start modelling Asian and discrete barrier
+    type options
     
-        #generate a path
-        path_generator = self.path_generator
-        path_generator.setup()
+    Early exerices not considered yet
+    '''
         
+    def make_parameter_template(self):
         
-        sum = 0.
+        """
+        Creates a dict of input paramters to fill in"
+        payoff - vanilla payoff against average"
+        look_at_times - list of times that will be avd over"
+        Expiry - single time of expiry"
+        """
         
-        for i in range(0,num_paths):
+        parameters = {'payoff':None, 
+                      'look_at_times':None, 
+                      'Expiry':None, 
+                      'Barrier':None}
+        
+        return parameters
             
-            path = path_gen.do_one_path() 
-            # plt.plot(look_at_times,path)
-            # plt.show()
-            
-            #Evaluate the payoff for path
-            #Average of price - K
-            average_price = np.mean(path)
+    def get_cashflows(self, path):
+        
+        #Evaluate the payoff for path
+        #Calc payoff
+        payoff = self.parameters['payoff']
+        barrier = self.parameters['Barrier']
+        if any(map(lambda(x): x >= barrier,path)):
+            this_payoff = 0.0
+        else:
             #Calc payoff
-            po = VanillaCall(Strike=Strike)
-            this_payoff = po.po(average_price)
-            sum += this_payoff
-        
-        #Average and discount    
-        price = math.exp(-rate*Expiry)*sum/num_paths
-        
-        return price
+            this_payoff = payoff.po(path[-1]) #Get last element of path
         
         
+        return this_payoff
+
+
+        
+if __name__ == "__main__":
+    
+    from QDQuant.PayOffs import VanillaCall
+    
+    payoff = VanillaCall(Strike=100.)
+    parameters = {'payoff': payoff, 'look_at_times':[0.5,1.0],'Expiry':1.0}
+    
+    ao = AsianArithmeticOption(parameters)
+    
+    path = [110.,120.]
+    
+    print "Cash Flows for path", ao.get_cashflows(path)
+    
         
         

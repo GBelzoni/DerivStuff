@@ -1,20 +1,21 @@
 #Implementing and exotic pricer
-
-
-
 import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 from PathGenerators import GBMGenerator    
 from VanillaOptions import VanillaOption
-from PayOffs import VanillaCall
-    
+from PayOffs import VanillaCall, VanillaDigitalPut
+
+from PathDependentOption import AsianArithmeticOption, UpAndOutCall
+from PathDepMCPricer import PathDependentMCPricer
+from Gatherer import SDGatherer
+
 #Vanilla Monte Carlo Pricer
 from QDQuant.AnalyticFunctions import BSAnalyticFormulas
 
 #For call option do Price
-num_paths = 5000
+num_paths = 10000
 Strike = 103.
 Spot = 100.
 rate = 0.05
@@ -35,12 +36,14 @@ def AsianPrototype(Spot):
     
     #generate a path
     
-    path_gen = GBMGenerator(spot=Spot, rate=rate, vol=Vol, times=look_at_times)
+    market_params = {'spot':Spot, 'rate':rate, 'vol':Vol}
+    path_generator = GBMGenerator(market_params)
+    path_generator.sim_setup(look_at_times)
     sum = 0.
     
     for i in range(0,num_paths):
         
-        path = path_gen.do_one_path() 
+        path = path_generator.do_one_path() 
         # plt.plot(look_at_times,path)
         # plt.show()
         
@@ -68,12 +71,17 @@ def UpAndOutCallPrototype(Spot):
     
     #generate a path
     
-    path_gen = GBMGenerator(spot=Spot, rate=rate, vol=Vol, times=look_at_times)
+    
+    market_params = {'spot':Spot, 'rate':rate, 'vol':Vol}
+    path_generator = GBMGenerator(market_params)
+    path_generator.generator.set_seed(seed=0)
+    path_generator.sim_setup(look_at_times)
+    
     sum = 0.
     Knockout = 108.
     for i in range(0,num_paths):
         
-        path = path_gen.do_one_path() 
+        path = path_generator.do_one_path() 
         # plt.plot(look_at_times,path)
         # plt.show()
         
@@ -114,10 +122,68 @@ def plotAsianPrototype():
     plt.plot(Spots, Asian, Spots, BSanal)
     plt.show()
     
+def MCAsianPrice():
+    
+    
+    payoff = VanillaCall(Strike=Strike)
+    
+    #look at times
+    look_at_times = list(np.linspace(start=0, stop=Expiry, num=12))
+    
+    option_parameters = {'payoff': payoff, 'look_at_times':look_at_times,'Expiry':Expiry}
+    ao = AsianArithmeticOption(option_parameters)
+    
+    market_params = {'spot':Spot, 'rate':rate, 'vol':Vol}
+    path_generator = GBMGenerator(market_params)
+    
+    gatherer = SDGatherer()
+    pricer_parameters = {'path_generator':path_generator,
+                         'num_paths': num_paths,
+                         'gatherer': gatherer}
+     
+    pd_pricer = PathDependentMCPricer(pricer_parameters)
+    
+    price = pd_pricer.do_trade(ao)
+    
+    print "MC Asian opt price ", price
+
+def MCUpAndOutPrice():
+    
+    barrier = 108.
+    payoff = VanillaCall(Strike=Strike)
+    
+    #look at times
+    look_at_times = list(np.linspace(start=0, stop=Expiry, num=12))
+    
+    option_parameters = {'payoff': payoff, 
+                         'look_at_times':look_at_times,
+                         'Expiry':Expiry,
+                         'Barrier': barrier}
+    
+    ao = UpAndOutCall(option_parameters)
+    
+    market_params = {'spot':Spot, 'rate':rate, 'vol':Vol}
+    path_generator = GBMGenerator(market_params)
+    path_generator.generator.set_seed(seed=0)
+    
+    gatherer = SDGatherer()
+    pricer_parameters = {'path_generator':path_generator,
+                         'num_paths': num_paths,
+                         'gatherer': gatherer}
+     
+    pd_pricer = PathDependentMCPricer(pricer_parameters)
+    
+    price = pd_pricer.do_trade(ao)
+    
+    print "MC UpAndOut opt price ", price
+    
     
 if __name__ == "__main__":
-    
-#     print "Up and Out Call ", UpAndOutCallPrototype(Spot)
+#     print "MC Asian price ", MCAsianPrice()
+
+    print MCUpAndOutPrice()
+#     print AsianPrototype(Spot)
+    print "Up and Out Call ", UpAndOutCallPrototype(Spot)
 #     plotUpAndOutProtype()
-    plotAsianPrototype()
+#     plotAsianPrototype()
     

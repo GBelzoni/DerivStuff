@@ -4,44 +4,52 @@ Created on Feb 20, 2014
 @author: phcostello
 '''
 
+import math
+
 class PathDependentMCPricer(object):
     '''
     classdocs
     '''
     
-    def __init__(self, path_generator, input_parameters = None):
+    def __init__(self, input_parameters = None):
         '''
         Constructor
         '''
-        self.path_generator
         self.input_parameters = input_parameters
+        self.market_parameters = self.input_parameters['path_generator'].market_params
     
     
-    def do_trade(self):
+    def do_trade(self,trade):
+        
+        num_paths = self.input_parameters['num_paths']   
+        
         
         #look at times
-        look_at_times = list(np.linspace(start=0, stop=Expiry, num=12))
-        
+        look_at_times = trade.parameters['look_at_times']
+    
         #generate a path
+        path_generator = self.input_parameters['path_generator']
+        path_generator.sim_setup(look_at_times)
         
-        path_gen = GBMGenerator(spot=Spot, rate=rate, vol=Vol, times=look_at_times)
-        sum = 0.
+        gatherer = self.input_parameters['gatherer']
+        
         
         for i in range(0,num_paths):
             
-            path = path_gen.do_one_path() 
-            # plt.plot(look_at_times,path)
-            # plt.show()
-            
-            #Evaluate the payoff for path
-            #Average of price - K
-            average_price = np.mean(path)
-            #Calc payoff
-            po = VanillaCall(Strike=Strike)
-            this_payoff = po.po(average_price)
-            sum += this_payoff
+            path = path_generator.do_one_path() 
+            this_payoff = trade.get_cashflows(path)
+            gatherer.dump_one_result(this_payoff)
         
-        #Average and discount    
-        price = math.exp(-rate*Expiry)*sum/num_paths
+        #Average and discount
+        rate = self.market_parameters['rate']
+        Expiry = trade.parameters['Expiry']
+                                  
+        
+        price = math.exp(-rate*Expiry)*gatherer.mean()
         
         return price
+    
+    
+if __name__ == "__main__":
+    
+    pass

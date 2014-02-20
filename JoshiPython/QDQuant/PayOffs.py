@@ -64,24 +64,7 @@ class VanillaCall(PayOff):
         '''
         return max(Spot - self.Strike , 0.0 )
     
-class VanillaPut(PayOff):
-    '''
-    PayOff of Vanilla Call
-    '''
 
-
-    def __init__(self, Strike):
-        '''
-        Constructor
-        '''
-        self.Strike = Strike
-    
-    def po(self, Spot):
-        
-        '''
-        PayOff of Call given underlying Spot
-        '''
-        return max(self.Strike - Spot, 0.0 )
 
 class VanillaDigitalCall(PayOff):
     '''
