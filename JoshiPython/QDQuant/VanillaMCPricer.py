@@ -30,11 +30,13 @@ class VanillaMCPricer(object):
         #Setup sim wide pars
         df = math.exp(-self.rate*trade.Expiry) 
         self.gatherer.reset()
-        self.generator.times = [trade.Expiry]
+        times = [trade.Expiry]
+        self.generator.sim_setup(times)
         
         for i in range(0,self.num_paths):
             #Generate S_t
             thisSpot = self.generator.do_one_path()[0]
+#             print thisSpot
             thisPayOff = trade.pay_off(thisSpot)
             self.gatherer.dump_one_result(thisPayOff)
         
@@ -48,7 +50,7 @@ if __name__ == '__main__':
     from PayOffs import VanillaCall, VanillaPut
     from VanillaOptions import VanillaOption
     from Gatherer import MeanGatherer, ConvergenceTable
-    from PathGenerators import GBMGenerator, Antithetic, NormalGenerator
+    from PathGenerators import GeneratorGBM, Antithetic, NormalGenerator
     
     from AnalyticFunctions import BSAnalyticFormulas
     
@@ -70,8 +72,13 @@ if __name__ == '__main__':
     
     #Model parameters
     times = [1.]
-    num_paths = 500000
-    generator = GBMGenerator(Spot,rate,Vol,times)
+    num_paths = 50000
+    market_params = {'spot':Spot,
+                     'rate': rate,
+                     'vol': Vol}
+    
+    generator = GeneratorGBM(market_params)
+    generator.sim_setup(times)
     gatherer = MeanGatherer()
     
     #Do sim

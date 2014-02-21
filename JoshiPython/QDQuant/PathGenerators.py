@@ -4,69 +4,179 @@ Created on Feb 16, 2014
 @author: phcostello
 '''
 
-from numpy import random
-from numpy.random import normal 
 from math import exp, sqrt
+import numpy as np
+from VariateGenerator import Antithetic, NormalGenerator
 
-
-
-class NormalGenerator(object):
-    
-    """
-    Just a wrapper for generator of normals
-    Assumes generator interface same as numpy normals
-    Write wrapper for other generators
-    """
-    
-    def __init__(self, generator=normal):
-        
-        self.generator = generator
-    
-    def get_variates(self,mu=0,sig=1,size=1):
-        
-        """
-        based on numpy normal generator
-        """
-        
-        return self.generator(mu,sig,size)
-    
-    def set_seed(self,seed):
-        
-        """
-        Reset seed of random generatr
-        """
-        random.seed(seed)
-        
-class Antithetic(NormalGenerator):
-    """
-    Decorator for generator that does antithetic sampling
-    """
-    def __init__(self, generator=NormalGenerator()):
-        
-        super(Antithetic,self).__init__(generator)
-        self.even = True
-        self.lastsample=0
-        
-    def get_variates(self,mu=0,sig=1,size=1):
-        
-        """
-        based on numpy normal generator
-        note that size of returned samples = 2*size due to antithetic sampling
-        """
-        
-        if self.even:
-            self.even = False
-            self.lastsample = self.generator.get_variates(mu,sig,size)
-            return self.lastsample
-        else:
-            self.even = True
-            return -self.lastsample       
-
-class GBMGenerator(object):
+class GeneratorGBM(object):
     '''
-    classdocs
+    Generates a path from a multi dimensional GBM
+    Uses draws from analytic solution to GBM rather than incremental stepping
+    
+    Inputs
+    market_params - spot, rate, covariance matrix
+    bm_construction - how do we contruct underlying brownian motion
+    
+    Members = generator, this generates
     '''
 
+
+    def __init__(self, market_params, path_construction = 'incremental'):
+        '''
+        
+        '''
+    
+        self.market_params = market_params #Should clean this up
+        self.spot = market_params['spot']
+        self.rate = market_params['rate']
+        self.vol = market_params['vol']
+        self.generator = NormalGenerator()
+        self.path_construction = path_construction
+        
+        
+    
+    def sim_setup(self,times):
+        
+        '''
+        Setup of variables that are constant for each path in sim
+        Note that this is where setup path generation method
+        Concrete generation methods implemented as "do_one_path_*"
+        '''
+        #Contruct log of drifts up to random draw
+        
+        self.times = times
+        self.drifts = [ self.rate*time - 0.5 * self.vol*self.vol*time for time in times]
+        self.num_times = len(times)
+        
+        #Setup path generating function
+        self.path_generation_method = getattr(self, "do_one_path_{}".format(self.path_construction))
+    
+    def do_one_path(self):
+        """
+        This only works if path_generation_method has been set
+        """
+        return self.path_generation_method()
+    
+    def do_one_path_incremental(self):
+        
+        """
+        Currently set to use analytic solution to GBM
+        Uses incremental build of brownian motion
+        """
+        
+        randoms = self.generator.get_variates(0,1,self.num_times)
+        
+        #Construct brownian motion path at times
+        bm_path = []
+        bm_t = 0
+        
+        #Incremental BM generation
+        times_aug = [0]+times
+        time_diffs = [ times_aug[i+1] - times_aug[i] for i in range(0,len(times))]
+        
+        for i in range(0, self.num_times):
+            bm_t += self.vol*sqrt(self.times[i])*randoms[i]
+            bm_path += [bm_t]
+        
+        #Construct GBM path at times
+        #remember to exp as have gen logs of paths
+        path = [ exp(self.drifts[i] + bm_path[i]) for i in range(0,self.num_times)]
+        return path
+    
+    def do_one_path_brownian_bridge(self):
+        
+        """
+        Currently set to use analytic solution to GBM
+        Does brownian bridge construction of Brownian motion
+        
+        To do brownian bridge you:
+        
+        Rearrange indexes by always choosing gap where variance will be largest
+        Only implemented where index gap is largest , e.g, (1,2,..,10) => (10,5,2,7,3,8,1,4,6,9]
+        This is implemented in _"_bb_indexes" function below
+        
+        Generate BM path by generating draw for reindex incrementally, e.g for #times = 10
+        
+        Use brownian bridge formula http://en.wikipedia.org/wiki/Brownian_bridge
+        ie if B(t_1)=a and B(t_2)=b then
+        
+        Look up Shrev
+        
+        
+        ... 
+         
+        """
+        
+        randoms = self.generator.get_variates(0,1,self.num_times)
+        
+        
+        #Construct order of reorder path generation
+        index = [i for i in range(0, self.num_times)]
+        bb_reind = self.__bb_indexes(index)
+        
+        
+        #Construct brownian motion path at times
+        bm_path = [0]*self.num_times
+        bm_t = 0
+        last_bbindex = 0
+        
+        
+        for i in range(0, self.num_times):
+            
+            reind = bb_reind[i]
+            if last_bbindex < reind:
+                direction = 1.0
+                
+            else:
+                direction = - 1.0  
+                
+            difftime = direction*(times[reind] -times[last_bbindex]) 
+            bm_t += direction*self.vol*sqrt(difftime)*randoms[i]
+            bm_path[reind] = bm_t
+            last_bbindex = reind
+            
+        #Construct GBM path at times
+        #remember to exp as have gen logs of paths
+        path = [ self.spot*exp(self.drifts[i] + bm_path[i]) for i in range(0,self.num_times)]
+        return path
+    
+    def __bb_indexes(self, times):
+        
+        """
+        Utility function for reordering brownian bridge
+        """
+        
+        times = list(times)
+        bb_indexes = [0,len(times)-1]
+        for j in range(0,len(times)-1):
+            
+            stmp = sorted(bb_indexes)
+            #get interval sizes
+            diffs = [stmp[i+1]-stmp[i] for i in range(0,len(stmp)-1)]
+            #get max interval width
+            max_int_width = max(diffs)
+            #get left hand index of left interval
+            lindex_ofmax_int = diffs.index(max_int_width)
+            next_index = stmp[lindex_ofmax_int] + max_int_width/2
+            bb_indexes+=[next_index]
+            print bb_indexes
+        return bb_indexes
+    
+class GeneratorStepper(object):
+    '''
+    We want to make a path generator that evolves by stepping of an SD
+    It will generate an n-dimensional path where the paths have
+    
+    Inputs
+    SDE - sde_drift, sde_vol
+    Random_generator - has generate n variates
+    Initial params - e.g, initial_spots, 
+    Deterministic SDE_params - e.g, possibley rates, vols, cov
+    
+    
+    '''
+
+    
 
     def __init__(self, market_params):
         '''
@@ -74,10 +184,9 @@ class GBMGenerator(object):
         '''
     
         self.market_params = market_params
-        self.spot = market_params['spot']
-        self.rate = market_params['rate']
-        self.vol = market_params['vol']
-        
+        self.spots = market_params['spots']
+        self.rates = market_params['rates']
+        self.cov = market_params['cov']
         self.generator = NormalGenerator(normal)
         
     
@@ -109,7 +218,6 @@ class GBMGenerator(object):
         
         return path
     
-    
 if __name__ == '__main__':
     
     import numpy as np
@@ -117,20 +225,20 @@ if __name__ == '__main__':
     spot = 100.
     rate = 0.05
     vol = 0.01
-    times = list(np.linspace(0.01, stop=1.0, num=200))
+    times = list(np.linspace(0.01, stop=10.0, num=200))
 #     times = [1.]
     
     market_params = {'spot':spot, 'rate':rate, 'vol':vol}
     
-    bgmgen = GBMGenerator(market_params)
+    bgmgen = GeneratorGBM(market_params, "brownian_bridge")
     bgmgen.sim_setup(times)
     #Change random generator
-    generator = NormalGenerator(normal) #Make generator out of np normal generator
+    generator = NormalGenerator() #Make generator out of np normal generator
     athetic = Antithetic(generator)
     
     bgmgen.generator = athetic 
-#     print athetic.get_variates(0, 1, 3)
-#     print athetic.get_variates(0, 1, 3)
+    print athetic.get_variates(0, 1, 3)
+    print athetic.get_variates(0, 1, 3)
     
     path = bgmgen.do_one_path()
     print len(path)

@@ -16,13 +16,15 @@ from QDQuant.AnalyticFunctions import BSAnalyticFormulas
 
 #For call option do Price
 
-numofpaths = 10000
-Strike = 100.
+numofpaths = 100000
+Strike = 105.
 Spot = 100.
 rate = 0.05
 dividend = 0.0
 Vol = 0.05
-Expiry = 0.05
+Expiry = 1.0
+
+market_params = {'spot': Spot, 'vol':Vol,'rate':rate }
 
 
 bs1 = BSAnalyticFormulas(Spot, Strike, rate, Vol, Expiry, dividend)
@@ -58,7 +60,7 @@ def MC_prototype():
 #This is implementation in lib
 
 from QDQuant.VanillaMCPricer import VanillaMCPricer
-from QDQuant.PathGenerators import GBMGenerator, NormalGenerator
+from QDQuant.PathGenerators import GeneratorGBM, NormalGenerator
 from QDQuant.Gatherer import MeanGatherer, SDGatherer, ConvergenceTable
 from QDQuant.PayOffs import VanillaCall, VanillaDigitalPut
 from QDQuant.VanillaOptions import VanillaOption
@@ -69,7 +71,9 @@ def single_MC_run():
     gatherer = SDGatherer()
     gatherer_ct = ConvergenceTable(gatherer,numofpaths)
     
-    path_gen = GBMGenerator(spot=Spot, rate=rate, vol=Vol, times=[Expiry])
+    
+    
+    path_gen = GeneratorGBM(market_params=market_params)
     
     pricer_mc= VanillaMCPricer(spot=Spot, 
                                rate=rate, 
@@ -103,7 +107,7 @@ def range_pars_sim(do_plots=True):
         gatherer = SDGatherer()
         
         ngen = NormalGenerator()
-        path_gen = GBMGenerator(spot=thisSpot, rate=rate, vol=Vol, times=[Expiry])
+        path_gen = GeneratorGBM(spot=thisSpot, rate=rate, vol=Vol, times=[Expiry])
         pricer_mc= VanillaMCPricer(spot=Spot, 
                                rate=rate, 
                                Vol=Vol, 
@@ -140,10 +144,14 @@ def do_bump_deltas():
         """
         This function for testing bump delta but with NO seed setting
         Should give garbage as seed needs to be reset in MC bump deltas
+        
+        Note that dependence on spot is actually in the path generator
         """
         
         gatherer = SDGatherer()
-        path_gen = GBMGenerator(spot=x, rate=rate, vol=Vol, times=[Expiry])
+        market_params2 = dict(market_params)
+        market_params2['spot'] = x
+        path_gen = GeneratorGBM(market_params=market_params)
         
         pricer_mc= VanillaMCPricer(spot=x, 
                                    rate=rate, 
@@ -166,10 +174,14 @@ def do_bump_deltas():
         """
         This function for testing bump delta but WITH seed setting
         Should give good result
+        
+        Note that dependence on spot is actually in the path generator
         """
         
         gatherer = SDGatherer()
-        path_gen = GBMGenerator(spot=x, rate=rate, vol=Vol, times=[Expiry])
+        market_params2 = dict(market_params)
+        market_params2['spot'] = x
+        path_gen = GeneratorGBM(market_params = market_params2)
         path_gen.generator.set_seed(seed=0)
         
         pricer_mc= VanillaMCPricer(spot=x, 
@@ -186,13 +198,13 @@ def do_bump_deltas():
     
         return pricer_mc.price
         
-        
-    print "MCCall price, seed = 0", CallMCDelbmp_WithSeedReset(100)
-    print "MCCall price, seed = 0", CallMCDelbmp_WithSeedReset(100)
-    print "MCCall Delta with setting seed", bd(100,CallMCDelbmp_WithSeedReset)
+    print "MCCall price, seed = 0", CallMCDelbmp_WithSeedReset(100.)
+#     print "MCCall price, seed = 0", CallMCDelbmp_WithSeedReset(100.1)
+    print "MCCall Delta with setting seed", bd(100.,CallMCDelbmp_WithSeedReset,epsilon = 1e-2)
 
 
 ##TODO
+
 def path_wise_MC():
     
     pass     
@@ -210,8 +222,10 @@ def likelyhoodratio_MC_Delta():
 
 if __name__ == '__main__':
     
+    #Functions to test project
+    
     do_bump_deltas()
-    single_MC_run()
+#     single_MC_run()
 #     range_pars_sim()
 #     pass
 

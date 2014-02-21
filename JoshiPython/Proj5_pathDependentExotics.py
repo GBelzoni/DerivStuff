@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from PathGenerators import GBMGenerator    
+from PathGenerators import GeneratorGBM    
 from VanillaOptions import VanillaOption
 from PayOffs import VanillaCall, VanillaDigitalPut
 
@@ -37,7 +37,7 @@ def AsianPrototype(Spot):
     #generate a path
     
     market_params = {'spot':Spot, 'rate':rate, 'vol':Vol}
-    path_generator = GBMGenerator(market_params)
+    path_generator = GeneratorGBM(market_params)
     path_generator.sim_setup(look_at_times)
     sum = 0.
     
@@ -73,7 +73,7 @@ def UpAndOutCallPrototype(Spot):
     
     
     market_params = {'spot':Spot, 'rate':rate, 'vol':Vol}
-    path_generator = GBMGenerator(market_params)
+    path_generator = GeneratorGBM(market_params)
     path_generator.generator.set_seed(seed=0)
     path_generator.sim_setup(look_at_times)
     
@@ -134,7 +134,7 @@ def MCAsianPrice():
     ao = AsianArithmeticOption(option_parameters)
     
     market_params = {'spot':Spot, 'rate':rate, 'vol':Vol}
-    path_generator = GBMGenerator(market_params)
+    path_generator = GeneratorGBM(market_params)
     
     gatherer = SDGatherer()
     pricer_parameters = {'path_generator':path_generator,
@@ -163,7 +163,7 @@ def MCUpAndOutPrice():
     ao = UpAndOutCall(option_parameters)
     
     market_params = {'spot':Spot, 'rate':rate, 'vol':Vol}
-    path_generator = GBMGenerator(market_params)
+    path_generator = GeneratorGBM(market_params)
     path_generator.generator.set_seed(seed=0)
     
     gatherer = SDGatherer()
@@ -181,7 +181,7 @@ def MCUpAndOutPrice():
 if __name__ == "__main__":
 #     print "MC Asian price ", MCAsianPrice()
 
-    print MCUpAndOutPrice()
+    MCUpAndOutPrice()
 #     print AsianPrototype(Spot)
     print "Up and Out Call ", UpAndOutCallPrototype(Spot)
 #     plotUpAndOutProtype()
