@@ -103,7 +103,21 @@ class GeneratorGBM(object):
         Use brownian bridge formula http://en.wikipedia.org/wiki/Brownian_bridge
         ie if B(t_1)=a and B(t_2)=b then
         
-        Look up Shrev
+        Actually use Bayes formula for W_0 =0, W_T=a,
+         p(W_t=x|W_T=a) = p(W_T=a|W_t=x)p(W_t=x)/p(W_t=a)
+        
+        Now p(W_T=a|W_t=x) = p(W'_{T-t} = (a-x)|W'_0=0) for BM W' by Markov so
+         
+        Sub in normal dist pdfs for above and do some algebra and you get
+        
+        p(W_t=x|W_T=a) = 1/T * norm_dens( at, sqrt(t(T-t)T))
+        
+        ie brownian bridge B_t := (W_t|W_T=a) is dist as 
+        
+            1/T * N(a*t,sqrt(t(T-t)T)) = a*t/T + sqrt(t(T-t)/T))*N(0,1)
+        
+        So we can do BB by putting end interval first then drawing the middle from normal as above
+        
         
         Alternativel, you can:
         
