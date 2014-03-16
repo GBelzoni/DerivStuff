@@ -45,7 +45,7 @@ class Test(unittest.TestCase):
         in #http://en.wikipedia.org/wiki/Geometric_Brownian_motion
         """
         
-        num_paths = 100000
+        num_paths = 400000
         
         bgmgen = GeneratorGBM(self.market_params)
         bgmgen.generator=self.athetic
@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
         in #http://en.wikipedia.org/wiki/Geometric_Brownian_motion
         """
         
-        num_paths = 100000
+        num_paths = 200000
         
         bgmgen = GeneratorGBM(self.market_params, "brownian_bridge")
         bgmgen.generator=self.athetic

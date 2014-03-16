@@ -146,14 +146,10 @@ class GeneratorGBM(object):
         #Fill in the end time with the first random draw
         bm_path[-1]= times[-1]*vol*randoms[0]
         
-        
-        
 #         print "num_times", num_times
 #         print "reind ", reind_bb
 #          print "reintimes_do_one " ,reind_times
 #         print "bm_path 0", bm_path
-
-
 
         #Loop for generating next
         #start loop at second index as we have already placed two poinst
@@ -180,7 +176,7 @@ class GeneratorGBM(object):
             bm_path[ind_m] = W_m
             
             #Get increments
-#             bm_path_diff = [ bm_path[i+1] - bm_path[i] for i in range(0,len(bm_path)-1)]
+            #Just for debugging
             if False:
                 print "inl, inu ", inl, inu
                 print "tm", tm
@@ -189,75 +185,6 @@ class GeneratorGBM(object):
                 print "linear ", Wl + (Wu - Wl)*(tm-tl)/(tu-tl)
                 print "rand, " , sqrt((tm-tl)*(tu-tm)/(tu-tl))*vol*randoms[i+1]
                 print bm_path
-
-
-  
-        
-        
-#         #Construct covariance matrix for BM we want
-#         cov_rows = [ [min(times[i],times[j]) for j in range(0,num_times)] for i in range(0,num_times)]
-#         
-#         cov = np.matrix(cov_rows)
-# #         print "cov", cov
-#         #Rearrange  as per Brownian Bridge indexing
-# #         print "num times", num_times
-#         reind_bb = self.__bb_indexes(times)
-# #         print "reind vec", reind_bb
-#         cov_bb = cov[reind_bb,:][:,reind_bb]
-# #         print "cov_bb ", cov_bb
-#         
-#         #Contruct Cholesky decomp
-#         Abb = np.linalg.cholesky(cov_bb)
-#         
-# #         cov2 = Abb.dot(np.transpose(Abb))
-#         
-#         
-#         
-#         #Construct BM path in BB indexing
-# #         print "Shape randoms", np.matrix(randoms).T.shape
-# #         print "shape Abb", Abb.shape
-#         bm_path_bbind = np.matrix(Abb).dot(np.matrix(randoms).T)
-# #         print "shape bmm_path", bm_path_bbind.shape
-#         
-#         #Construct matrix to reverse bb_indexing
-#         idm = np.identity(num_times)
-#         idm_ri = idm[reind_bb,:]
-#         idm_inv = np.linalg.inv(idm_ri)
-#         
-#         #Rearrange path back to original indexing
-#         bm_path = idm_inv.dot(bm_path_bbind)
-#         
-#         
-#         print "cov2 ", idm_inv.dot(cov2.dot(np.transpose(idm_inv)))
-###########################
-#        
-#       #Construct order of reorder path generation
-#         index = [i for i in range(0, self.num_times)]
-#         bb_reind = self.__bb_indexes(index)
-#         rev_reind = None
-#         
-#         #Construct cov matrix
-#         rows = [ [min(i,j) for j in range(0,self.num_times)] for i in self.num_times]
-#         
-#         #Construct brownian motion path at times
-#         bm_path = [0]*self.num_times
-#         bm_t = 0
-#         last_bbindex = 0
-#         
-#         
-#         for i in range(0, self.num_times):
-#             
-#             reind = bb_reind[i]
-#             if last_bbindex < reind:
-#                 direction = 1.0
-#                 
-#             else:
-#                 direction = - 1.0  
-#                 
-#             difftime = direction*(times[reind] -times[last_bbindex]) 
-#             bm_t += direction*self.vol*sqrt(difftime)*randoms[i]
-#             bm_path[reind] = bm_t
-#             last_bbindex = reind
             
         #Construct GBM path at times
         #remember to exp as have gen logs of paths
@@ -269,6 +196,7 @@ class GeneratorGBM(object):
         """
         Utility function for reordering brownian bridge
         index0 flag sets whether you want the indexes in the reindex starting at 0
+        ie index0=True if you don't have the time=0 zero value in your list
         """
         
         times = list(times)
