@@ -175,18 +175,20 @@ class GeneratorGBM(object):
             tm = times[ind_m]
             
             #W_m = a*t/T + sqrt(t(T-t)/T))*N(0,1)
-            W_m = Wl + (Wu - Wl)*(tm-tl)/(tu-tl) + sqrt((tm-tl)*(tu-tm)/(tu-tl))*vol*randoms[i]
+            W_m = Wl + (Wu - Wl)*(tm-tl)/(tu-tl) +sqrt((tm-tl)*(tu-tm)/(tu-tl))*vol*randoms[i+1]
 
             bm_path[ind_m] = W_m
-        
-
-#             print "inl, inu ", inl, inu
-#             print "tm", tm
-#             print "tl, tu ", [tl, tu]
-#             print "Wl, Wu ", [Wl, Wu]
-#             print "linear ", Wl + (Wu - Wl)*(tm-tl)/(tu-tl)
-#             print "rand, " , sqrt((tm-tl)*(tu-tm)/(tu-tl))*vol*randoms[i]
-#             print bm_path
+            
+            #Get increments
+#             bm_path_diff = [ bm_path[i+1] - bm_path[i] for i in range(0,len(bm_path)-1)]
+            if False:
+                print "inl, inu ", inl, inu
+                print "tm", tm
+                print "tl, tu ", [tl, tu]
+                print "Wl, Wu ", [Wl, Wu]
+                print "linear ", Wl + (Wu - Wl)*(tm-tl)/(tu-tl)
+                print "rand, " , sqrt((tm-tl)*(tu-tm)/(tu-tl))*vol*randoms[i+1]
+                print bm_path
 
 
   
@@ -356,7 +358,7 @@ if __name__ == '__main__':
     vol = 0.05
     
 #     times = list(np.linspace(0.0, stop=1.0, num=4))
-    times = list(np.linspace(0.0, stop=1.0, num=101))
+    times = list(np.linspace(0.0, stop=1.0, num=3))
     times = times[1:]
     print times
 #     times = [1.]

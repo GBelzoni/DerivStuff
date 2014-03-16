@@ -17,7 +17,7 @@ class Test(unittest.TestCase):
         spot = 100.
         rate = 0.05
         vol = 0.1
-        times = list(np.linspace(0.0, stop=1.0, num=4))
+        times = list(np.linspace(0.0, stop=1.0, num=3))
         
         self.times = times[1:]
         
@@ -67,7 +67,7 @@ class Test(unittest.TestCase):
         result['mean_theo'] = [ spot*exp(rate*t) for t in self.times]
         result['var_theo'] = [ spot**2 *exp(2*rate*t)*(exp(vol*vol*t)-1) for t in self.times]
         
-        print "inc result", result
+        print "inc result\n", result
         
         mean_theo_error =  (result['mean']- result['mean_theo']).abs().sum()
         var_theo_error =  (result['var']- result['var_theo']).abs().sum()
@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
         in #http://en.wikipedia.org/wiki/Geometric_Brownian_motion
         """
         
-        num_paths = 50000
+        num_paths = 100000
         
         bgmgen = GeneratorGBM(self.market_params, "brownian_bridge")
         bgmgen.generator=self.athetic
