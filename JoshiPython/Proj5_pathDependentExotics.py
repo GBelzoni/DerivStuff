@@ -44,15 +44,17 @@ def AsianPrototype(Spot):
     for i in range(0,num_paths):
         
         path = path_generator.do_one_path() 
-        # plt.plot(look_at_times,path)
-        # plt.show()
+        #plt.plot(look_at_times,path)
+        #plt.show()
         
         #Evaluate the payoff for path
         #Average of price - K
         average_price = np.mean(path)
+
         #Calc payoff
         po = VanillaCall(Strike=Strike)
         this_payoff = po.po(average_price)
+        
         sum += this_payoff
     
     #Average and discount    
@@ -181,9 +183,9 @@ def MCUpAndOutPrice():
 if __name__ == "__main__":
 #     print "MC Asian price ", MCAsianPrice()
 
-    MCUpAndOutPrice()
-#     print AsianPrototype(Spot)
-    print "Up and Out Call ", UpAndOutCallPrototype(Spot)
+#     MCUpAndOutPrice()
+    print AsianPrototype(Spot)
+#     print "Up and Out Call ", UpAndOutCallPrototype(Spot)
 #     plotUpAndOutProtype()
 #     plotAsianPrototype()
     

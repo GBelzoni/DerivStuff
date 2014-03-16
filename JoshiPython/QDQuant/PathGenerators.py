@@ -45,8 +45,8 @@ class GeneratorGBM(object):
         #Contruct log of drifts up to random draw
         
         self.times = times
-        self.drifts = [ self.rate*time - 0.5 * self.vol*self.vol*time for time in times]
-        self.num_times = len(times)
+        self.drifts = [ self.rate*time - 0.5 * self.vol*self.vol*time for time in self.times]
+        self.num_times = len(self.times)
         
         #Setup path generating function
         self.path_generation_method = getattr(self, "do_one_path_{}".format(self.path_construction))
@@ -71,16 +71,16 @@ class GeneratorGBM(object):
         bm_t = 0
         
         #Incremental BM generation
-        times_aug = [0]+times
-        time_diffs = [ times_aug[i+1] - times_aug[i] for i in range(0,len(times))]
+        times_aug = [0]+self.times
+        time_diffs = [ times_aug[i+1] - times_aug[i] for i in range(0,len(self.times))]
         
         for i in range(0, self.num_times):
-            bm_t += self.vol*sqrt(self.times[i])*randoms[i]
+            bm_t += self.vol*sqrt(time_diffs[i])*randoms[i]
             bm_path += [bm_t]
         
         #Construct GBM path at times
         #remember to exp as have gen logs of paths
-        path = [ exp(self.drifts[i] + bm_path[i]) for i in range(0,self.num_times)]
+        path = [ self.spot*exp(self.drifts[i] + bm_path[i]) for i in range(0,self.num_times)]
         return path
     
     def do_one_path_brownian_bridge(self):
@@ -116,10 +116,12 @@ class GeneratorGBM(object):
         
             1/T * N(a*t,sqrt(t(T-t)T)) = a*t/T + sqrt(t(T-t)/T))*N(0,1)
         
+        probably should have a vol in their somewhere - check
+        
         So we can do BB by putting end interval first then drawing the middle from normal as above
         
         
-        Alternativel, you can:
+        Alternatively, you can:
         
         1. take incremental covariance matrix, rearrange indexes
         2. cov*_ij = cov_bb(i)bb(j)
@@ -132,45 +134,101 @@ class GeneratorGBM(object):
         #Get randoms for draw
         randoms = self.generator.get_variates(0,1,self.num_times)
         times = self.times
-        num_times = self.num_times
+        vol = self.market_params['vol']
+        reind_bb = self.__bb_indexes(times,index0=False)
+        
+        times = [0.] + times
+        reind_bb = [0] + reind_bb
+        reind_times = [times[ind_bb] for ind_bb in reind_bb ]
+        
+        #Set up path of zeroes - include one extra for zero at start
+        bm_path = (len(times))*[0.0]
+        #Fill in the end time with the first random draw
+        bm_path[-1]= times[-1]*vol*randoms[0]
+        
+        
+        
 #         print "num_times", num_times
+#         print "reind ", reind_bb
+#          print "reintimes_do_one " ,reind_times
+#         print "bm_path 0", bm_path
+
+
+
+        #Loop for generating next
+        #start loop at second index as we have already placed two poinst
+        #in bm_path
         
-        #Construct covariance matrix for BM we want
-        cov_rows = [ [min(times[i],times[j]) for j in range(0,num_times)] for i in range(0,num_times)]
+        ind_so_far = [reind_bb[0], reind_bb[1]]
         
-        cov = np.matrix(cov_rows)
-#         print "cov", cov
-        #Rearrange  as per Brownian Bridge indexing
-#         print "num times", num_times
-        reind_bb = self.__bb_indexes(times)
-#         print "reind vec", reind_bb
-        cov_bb = cov[reind_bb,:][:,reind_bb]
-#         print "cov_bb ", cov_bb
-        
-        #Contruct Cholesky decomp
-        Abb = np.linalg.cholesky(cov_bb)
-        
-#         cov2 = Abb.dot(np.transpose(Abb))
+        for (i, ind_m) in enumerate(reind_bb[2:]): 
         
         
+            ind_so_far += [ind_m]
+            sorted_so_far = sorted(ind_so_far)
+            
+            inu = sorted_so_far[sorted_so_far.index(ind_m)+1]
+            inl = sorted_so_far[sorted_so_far.index(ind_m)-1]
+            
+            tl, tu = times[inl], times[inu]
+            Wl, Wu = bm_path[inl], bm_path[inu]
+            tm = times[ind_m]
+            
+            #W_m = a*t/T + sqrt(t(T-t)/T))*N(0,1)
+            W_m = Wl + (Wu - Wl)*(tm-tl)/(tu-tl) + sqrt((tm-tl)*(tu-tm)/(tu-tl))*vol*randoms[i]
+
+            bm_path[ind_m] = W_m
         
-        #Construct BM path in BB indexing
-        print "Shape randoms", np.matrix(randoms).T.shape
-        print "shape Abb", Abb.shape
-        bm_path_bbind = np.matrix(Abb).dot(np.matrix(randoms).T)
-        print "shape bmm_path", bm_path_bbind.shape
-        
-        #Construct matrix to reverse bb_indexing
-        idm = np.identity(num_times)
-        idm_ri = idm[reind_bb,:]
-        idm_inv = np.linalg.inv(idm_ri)
-        
-        #Rearrange path back to original indexing
-        bm_path = idm_inv.dot(bm_path_bbind)
+
+#             print "inl, inu ", inl, inu
+#             print "tm", tm
+#             print "tl, tu ", [tl, tu]
+#             print "Wl, Wu ", [Wl, Wu]
+#             print "linear ", Wl + (Wu - Wl)*(tm-tl)/(tu-tl)
+#             print "rand, " , sqrt((tm-tl)*(tu-tm)/(tu-tl))*vol*randoms[i]
+#             print bm_path
+
+
+  
         
         
+#         #Construct covariance matrix for BM we want
+#         cov_rows = [ [min(times[i],times[j]) for j in range(0,num_times)] for i in range(0,num_times)]
+#         
+#         cov = np.matrix(cov_rows)
+# #         print "cov", cov
+#         #Rearrange  as per Brownian Bridge indexing
+# #         print "num times", num_times
+#         reind_bb = self.__bb_indexes(times)
+# #         print "reind vec", reind_bb
+#         cov_bb = cov[reind_bb,:][:,reind_bb]
+# #         print "cov_bb ", cov_bb
+#         
+#         #Contruct Cholesky decomp
+#         Abb = np.linalg.cholesky(cov_bb)
+#         
+# #         cov2 = Abb.dot(np.transpose(Abb))
+#         
+#         
+#         
+#         #Construct BM path in BB indexing
+# #         print "Shape randoms", np.matrix(randoms).T.shape
+# #         print "shape Abb", Abb.shape
+#         bm_path_bbind = np.matrix(Abb).dot(np.matrix(randoms).T)
+# #         print "shape bmm_path", bm_path_bbind.shape
+#         
+#         #Construct matrix to reverse bb_indexing
+#         idm = np.identity(num_times)
+#         idm_ri = idm[reind_bb,:]
+#         idm_inv = np.linalg.inv(idm_ri)
+#         
+#         #Rearrange path back to original indexing
+#         bm_path = idm_inv.dot(bm_path_bbind)
+#         
+#         
 #         print "cov2 ", idm_inv.dot(cov2.dot(np.transpose(idm_inv)))
-        
+###########################
+#        
 #       #Construct order of reorder path generation
 #         index = [i for i in range(0, self.num_times)]
 #         bb_reind = self.__bb_indexes(index)
@@ -201,7 +259,7 @@ class GeneratorGBM(object):
             
         #Construct GBM path at times
         #remember to exp as have gen logs of paths
-        path2 = [ self.spot*exp(self.drifts[i] + bm_path[i]) for i in range(0,self.num_times)]
+        path2 = [ self.spot*exp(self.drifts[i] + bm_path[i+1]) for i in range(0,self.num_times)]
         return path2
     
     def __bb_indexes(self, times, index0=True):
@@ -295,9 +353,10 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     spot = 100.
     rate = 0.05
-    vol = 0.001
+    vol = 0.05
+    
 #     times = list(np.linspace(0.0, stop=1.0, num=4))
-    times = list(np.linspace(0.0, stop=1.0, num=100))
+    times = list(np.linspace(0.0, stop=1.0, num=101))
     times = times[1:]
     print times
 #     times = [1.]
@@ -312,12 +371,12 @@ if __name__ == '__main__':
     athetic = Antithetic(generator)
     
     bgmgen.generator = athetic 
-    print athetic.get_variates(0, 1, 3)
-    print athetic.get_variates(0, 1, 3)
+#     print athetic.get_variates(0, 1, 3)
+#     print athetic.get_variates(0, 1, 3)
     
     path = bgmgen.do_one_path()
-    print len(path)
-    print list(times)
+#     print len(path)
+#     print list(times)
     plt.plot(times,path)
     plt.show()
     
