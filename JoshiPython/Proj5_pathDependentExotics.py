@@ -179,13 +179,57 @@ def MCUpAndOutPrice():
     
     print "MC UpAndOut opt price ", price
     
+def plotUpAndOut():
+    
+    
+    Spots = np.linspace(start=50., stop=120, num=100)
+    Spots = list(Spots)
+    
+    barrier = 108.
+    payoff = VanillaCall(Strike=Strike)
+    
+    #look at times
+    look_at_times = list(np.linspace(start=0, stop=Expiry, num=12))
+    
+    option_parameters = {'payoff': payoff, 
+                         'look_at_times':look_at_times,
+                         'Expiry':Expiry,
+                         'Barrier': barrier}
+    
+    ao = UpAndOutCall(option_parameters)
+    
+    prices = []
+    for Spot in Spots:
+        market_params = {'spot':Spot, 'rate':rate, 'vol':Vol}
+        path_generator = GeneratorGBM(market_params)
+        path_generator.generator.set_seed(seed=0)
+        
+        gatherer = SDGatherer()
+        pricer_parameters = {'path_generator':path_generator,
+                             'num_paths': num_paths,
+                             'gatherer': gatherer}
+         
+        pd_pricer = PathDependentMCPricer(pricer_parameters)
+    
+        price = pd_pricer.do_trade(ao)
+    
+        prices += [price]
+    
+    plt.plot(Spots, prices)
+    plt.show()
     
 if __name__ == "__main__":
 #     print "MC Asian price ", MCAsianPrice()
 
 #     MCUpAndOutPrice()
-    print AsianPrototype(Spot)
+#     print "AsianPrototype ", AsianPrototype(Spot)
 #     print "Up and Out Call ", UpAndOutCallPrototype(Spot)
-#     plotUpAndOutProtype()
+    import time
+    t0 = time.time()
+    plotUpAndOutProtype()
+    print "prototype u/o took {} minutes".format((time.time()- t0)/60.)
 #     plotAsianPrototype()
+    t0 = time.time()
+    plotUpAndOut()
+    print "prototype u/o took {} minutes".format((time.time()- t0)/60.)
     
