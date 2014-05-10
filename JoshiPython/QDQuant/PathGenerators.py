@@ -286,7 +286,7 @@ if __name__ == '__main__':
     vol = 0.05
     
 #     times = list(np.linspace(0.0, stop=1.0, num=4))
-    times = list(np.linspace(0.0, stop=1.0, num=3))
+    times = list(np.linspace(0.0, stop=1.0, num=100))
     times = times[1:]
     print times
 #     times = [1.]

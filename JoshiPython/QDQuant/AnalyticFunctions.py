@@ -163,3 +163,60 @@ class BSAnalyticFormulas(object):
         """
         return self.Spot*self.pdf1*math.sqrt(self.Expiry)
     
+    
+class AnalyticInterestRateFormulas(object):
+    
+    @classmethod
+    def caplet(self, 
+               spotforward,
+               Strike,
+               vol1,
+               T1,
+               T2,
+               ZCB2):
+
+        '''
+        Analytic Black Formula
+        Alternate implentation could take vol1 as parameter class
+        In this it is just the integrated vol to Time T1
+        '''
+        
+        
+        
+        d1 = (math.log(spotforward/Strike) + 0.5*vol1*vol1*T1)/(vol1*math.sqrt(T1))
+        d2 = (math.log(spotforward/Strike) - 0.5*vol1*vol1*T1)/(vol1*math.sqrt(T1))
+        
+        price = ZCB2*(T2-T1)*(spotforward*norm.cdf(d1) - Strike*norm.cdf(d2))
+        
+        return price
+    
+if __name__== "__main__":
+    
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+    
+    spotforward = np.linspace(0.045,0.055,num=30).tolist()
+    print spotforward
+    Strike = 0.05
+    vol = 0.1
+    T1 = 0.1
+    T2 = 2.
+    ZCB2 = 0.95
+    Notional = 1000000
+    
+    
+    price_spot = lambda spot : Notional * AnalyticInterestRateFormulas.caplet(spot,
+                                              Strike,
+                                              vol,
+                                              T1,
+                                              T2,
+                                              ZCB2)
+    
+    cap_price = map(price_spot,spotforward)
+    print cap_price
+    plt.plot(spotforward,cap_price)
+    plt.show()
+    
+    
+    
